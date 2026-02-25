@@ -19,7 +19,7 @@ jobs:
     name: Lint provision.sh
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install shellcheck
         run: sudo apt-get install -y shellcheck
@@ -31,7 +31,7 @@ jobs:
     name: Validate systemd unit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: systemd-analyze verify mascot.service
         run: |
@@ -42,7 +42,7 @@ jobs:
     name: Smoke test (Ubuntu 22.04)
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Python 3.11 installieren
         run: |
