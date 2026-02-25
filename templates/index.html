@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KI mit Bedacht – UKM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+
+  <header class="ukm-header">
+    <div class="ukm-header__inner">
+      <img src="{{ url_for('static', filename='images/im.png') }}" alt="UKM Banner" class="ukm-header__banner" />
+    </div>
+  </header>
+
+  <div class="ukm-stripe"></div>
+
+  <main class="ukm-main">
+    <div class="stage">
+
+      <!-- Linke Seite: Roboter + Sprechblase -->
+      <div class="scene">
+        <div class="bubble">
+          <div class="bubble-quote">"</div>
+          <span id="bubble-text" class="bubble-text" aria-live="polite" aria-atomic="true">Lade Tipp...</span>
+        </div>
+
+        <div class="mascot">
+          <img
+            src="{{ url_for('static', filename=mascot_image) }}"
+            alt="KI-Maskottchen"
+          />
+        </div>
+
+        <div class="mascot-role">dein freundlicher KI-Begleiter</div>
+        <div class="pool-info" id="pool-info"></div>
+      </div>
+
+      <!-- Rechte Seite: Labyrinth -->
+      <div class="maze-panel">
+        <div class="maze-title">KI-Duell: A* vs. BFS vs. DFS vs. Greedy</div>
+        <canvas id="maze-canvas"></canvas>
+        <div class="maze-legend" id="maze-legend">
+          <span class="legend-astar">A* — startet…</span>
+          <span class="legend-bfs">BFS — startet…</span>
+          <span class="legend-dfs">DFS — startet…</span>
+          <span class="legend-greedy">Greedy — startet…</span>
+        </div>
+        <div class="maze-speed-row">
+          <label for="maze-speed" class="maze-speed-label">🐢</label>
+          <input type="range" id="maze-speed" min="1" max="10" value="7" class="maze-speed-slider" />
+          <label for="maze-speed" class="maze-speed-label">🐇</label>
+        </div>
+        <div class="maze-subtitle">Wer findet den Weg zuerst?</div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="ukm-footer">
+    <div class="ukm-footer__inner">
+      <span>© Universitätsklinikum Münster</span>
+      <span class="ukm-footer__sep">|</span>
+      <span>KI-Initiative</span>
+    </div>
+  </footer>
+
+  <button id="fullscreen-btn" class="fullscreen-btn" title="Vollbild ein-/ausschalten">⛶ Vollbild</button>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="{{ url_for('static', filename='maze.js') }}"></script>
+</body>
+</html>

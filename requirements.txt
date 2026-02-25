@@ -1,0 +1,13 @@
+flask~=3.1
+anthropic~=0.83
+openai~=2.0
+pyyaml~=6.0
+gunicorn~=25.0
+tenacity~=9.0
+python-dotenv~=1.0
+apscheduler~=3.11
+flask-limiter~=4.1
+loguru~=0.7
+pydantic~=2.11
+flask-talisman~=1.1
+flask-compress~=1.15

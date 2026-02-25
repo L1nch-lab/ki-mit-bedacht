@@ -1,0 +1,37 @@
+[Unit]
+Description=Klaudius – KI-Maskottchen (Flask/Gunicorn)
+After=network.target
+Wants=network-online.target
+
+[Service]
+User=mascot
+Group=mascot
+WorkingDirectory=/opt/mascot-app
+
+# .env wird automatisch von python-dotenv geladen (WorkingDirectory)
+ExecStart=/opt/mascot-app/venv/bin/gunicorn \
+    --worker-class=gthread \
+    --workers=1 \
+    --threads=4 \
+    --bind=0.0.0.0:5000 \
+    --timeout=120 \
+    --access-logfile=- \
+    --error-logfile=- \
+    app:app
+
+Restart=always
+RestartSec=5
+
+# Logs → journald (abrufbar mit: journalctl -u mascot -f)
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mascot
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/opt/mascot-app
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,96 @@
+mascot:
+  name: "KI mit Bedacht"
+  image: "images/robot3.png"
+
+speech:
+  # Prompt-Datei (plain text, kein YAML-Formatting nötig)
+  prompt_file: "prompt.txt"
+  # Sekunden bis die Sprechblase automatisch wechselt
+  auto_refresh_seconds: 25
+  # Pool beim Serverstart automatisch auffüllen wenn zu klein
+  generate_on_startup: true
+  # Automatische Pool-Rotation alle x Stunden (0 = deaktiviert)
+  auto_rotate_hours: 1
+  pool:
+    # Unter dieser Anzahl werden neue Antworten generiert
+    min_size: 25
+    # Nie mehr als diese Anzahl speichern (älteste werden gelöscht)
+    max_size: 100
+    # Wie viele Antworten pro API-Call generiert werden
+    answers_per_request: 10
+
+ai:
+  # Aktiven Provider wählen – einfach den Namen eines Eintrags aus 'providers:' eintragen
+  provider: "openrouter"
+  # Optional: Fallback-Provider bei API-Fehler (leer lassen zum Deaktivieren)
+  fallback_provider: "claude_haiku"
+
+# ── Provider-Konfiguration ────────────────────────────────────────────────────
+# Jeden Provider einmal konfigurieren. Wechseln: nur ai.provider ändern.
+# Eigene Provider anlegen: neuen Eintrag mit type + model + api_key_env eintragen.
+#
+# Verfügbare type-Werte:
+#   anthropic     – Anthropic Claude (eigenes SDK)
+#   openai        – OpenAI direkt
+#   openrouter    – OpenRouter (Zugang zu 100+ Modellen)
+#   openai_compat – Jeder Provider mit OpenAI-kompatibler API (Mistral, DeepSeek, Ollama …)
+# ─────────────────────────────────────────────────────────────────────────────
+providers:
+
+  openrouter:
+    type: openrouter
+    api_key_env: "OPENROUTER_API_KEY"
+    # Modell-ID von https://openrouter.ai/models
+    model: "mistralai/mistral-7b-instruct"
+    site_url: "http://localhost:5000"
+    site_name: "Mascot App"
+
+  claude_haiku:
+    type: anthropic
+    api_key_env: "ANTHROPIC_API_KEY"
+    # Günstig und schnell; Alternativen: claude-sonnet-4-6, claude-opus-4-6
+    model: "claude-haiku-4-5-20251001"
+
+  gpt_mini:
+    type: openai
+    api_key_env: "OPENAI_API_KEY"
+    # Alternativen: gpt-4o, gpt-4.1-mini
+    model: "gpt-4o-mini"
+
+  mistral:
+    type: openai_compat
+    api_key_env: "MISTRAL_API_KEY"
+    base_url: "https://api.mistral.ai/v1"
+    model: "mistral-small-latest"
+
+  deepseek:
+    type: openai_compat
+    api_key_env: "DEEPSEEK_API_KEY"
+    base_url: "https://api.deepseek.com"
+    model: "deepseek-chat"
+
+  xai:
+    type: openai_compat
+    api_key_env: "XAI_API_KEY"
+    base_url: "https://api.x.ai/v1"
+    model: "grok-3-mini"
+
+  gemini:
+    type: openai_compat
+    api_key_env: "GEMINI_API_KEY"
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"
+    model: "gemini-2.0-flash"
+
+  ollama:
+    type: openai_compat
+    api_key_env: ""
+    base_url: "http://localhost:11434/v1"
+    # Installiertes Modell eintragen (z.B. llama3.2, mistral, phi4)
+    model: "llama3.2"
+
+  lm_studio:
+    type: openai_compat
+    api_key_env: ""
+    base_url: "http://localhost:1234/v1"
+    # Modellname wie in LM Studio angezeigt
+    model: "local-model"

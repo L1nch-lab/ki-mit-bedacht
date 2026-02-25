@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin – KI mit Bedacht</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}" />
+</head>
+<body>
+
+  <header class="adm-header">
+    <span class="adm-header__title">KI mit Bedacht — Admin</span>
+    <nav class="adm-header__nav">
+      <a href="/" target="_blank" class="adm-link">Zur App</a>
+      <a href="/admin/logout" class="adm-link adm-link--danger">Abmelden</a>
+    </nav>
+  </header>
+  <div class="adm-stripe"></div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <main class="adm-main">
+
+    <!-- ── Linke Spalte: Pool-Verwaltung ─────────────────────── -->
+    <section class="adm-card">
+      <h2 class="adm-card__title">Pool-Verwaltung</h2>
+
+      <div class="adm-status" id="pool-status">
+        <span class="adm-badge" id="status-count">–</span>
+        Antworten im Pool
+        &nbsp;·&nbsp;
+        <span class="adm-muted" id="status-updated">–</span>
+      </div>
+
+      <div class="adm-actions">
+        <button class="adm-btn" onclick="generateAnswers()">+ Generieren</button>
+        <button class="adm-btn adm-btn--secondary" onclick="rotatePool()">Rotieren</button>
+      </div>
+
+      <div class="adm-pool-header">
+        <span>Antworten</span>
+        <button class="adm-btn adm-btn--xs" onclick="loadPool()">Aktualisieren</button>
+      </div>
+      <ul class="adm-pool-list" id="pool-list">
+        <li class="adm-pool-item adm-muted">Wird geladen…</li>
+      </ul>
+    </section>
+
+    <!-- ── Rechte Spalte: Konfiguration ──────────────────────── -->
+    <section class="adm-card">
+      <h2 class="adm-card__title">Konfiguration</h2>
+
+      <!-- Provider-Auswahl -->
+      <div class="adm-field-group">
+        <label class="adm-label">Aktiver Provider</label>
+        <div class="adm-row">
+          <select class="adm-select" id="provider-select">
+            {% for name in providers %}
+              <option value="{{ name }}" {% if name == active_provider %}selected{% endif %}>
+                {{ name }} ({{ providers[name].type }})
+              </option>
+            {% endfor %}
+          </select>
+          <button class="adm-btn" onclick="switchProvider()">Wechseln</button>
+        </div>
+      </div>
+
+      <!-- Fallback-Provider -->
+      <div class="adm-field-group">
+        <label class="adm-label">Fallback-Provider</label>
+        <div class="adm-row">
+          <select class="adm-select" id="fallback-select">
+            <option value="">(keiner)</option>
+            {% for name in providers %}
+              <option value="{{ name }}" {% if name == fallback_provider %}selected{% endif %}>
+                {{ name }}
+              </option>
+            {% endfor %}
+          </select>
+          <button class="adm-btn" onclick="switchFallback()">Speichern</button>
+        </div>
+      </div>
+
+      <hr class="adm-divider" />
+
+      <!-- API-Keys pro Provider -->
+      <div class="adm-field-group">
+        <label class="adm-label">API-Keys hinterlegen</label>
+        <div class="adm-key-table">
+          {% for name, cfg in providers.items() %}
+            {% set env_var = cfg.get('api_key_env', '') %}
+            {% if env_var %}
+            <div class="adm-key-row">
+              <span class="adm-key-label" title="{{ env_var }}">{{ name }}</span>
+              <input
+                type="password"
+                class="adm-key-input"
+                id="key-{{ env_var }}"
+                placeholder="{{ env_var }}"
+                autocomplete="new-password"
+              />
+              <button class="adm-btn adm-btn--xs" onclick="saveKey('{{ env_var }}')">Speichern</button>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <hr class="adm-divider" />
+
+      <!-- Config-Reload -->
+      <div class="adm-field-group">
+        <label class="adm-label">Server-Konfiguration</label>
+        <button class="adm-btn adm-btn--secondary" onclick="reloadConfig()">Config neu laden</button>
+        <p class="adm-hint">Lädt config.yaml ohne Server-Neustart neu.</p>
+      </div>
+
+      <hr class="adm-divider" />
+
+      <!-- Anzeige & Pool -->
+      <div class="adm-field-group">
+        <label class="adm-label">Anzeige &amp; Pool</label>
+
+        <div class="adm-key-row">
+          <span class="adm-key-label" title="auto_refresh_seconds">Refresh (s)</span>
+          <input type="number" id="cfg-refresh" class="adm-key-input" min="5" step="1" />
+        </div>
+        <div class="adm-key-row">
+          <span class="adm-key-label" title="auto_rotate_hours">Rotation (h)</span>
+          <input type="number" id="cfg-rotate" class="adm-key-input" min="0" step="1" />
+          <span class="adm-muted" style="font-size:0.72rem">0 = aus</span>
+        </div>
+        <div class="adm-key-row">
+          <span class="adm-key-label" title="pool.min_size">Pool Min</span>
+          <input type="number" id="cfg-pmin" class="adm-key-input" min="1" step="1" />
+        </div>
+        <div class="adm-key-row">
+          <span class="adm-key-label" title="pool.max_size">Pool Max</span>
+          <input type="number" id="cfg-pmax" class="adm-key-input" min="1" step="1" />
+        </div>
+        <div class="adm-key-row">
+          <span class="adm-key-label" title="pool.answers_per_request">Pro Request</span>
+          <input type="number" id="cfg-apr" class="adm-key-input" min="1" step="1" />
+        </div>
+
+        <button class="adm-btn" onclick="saveSpeechConfig()" style="align-self:flex-start;margin-top:0.25rem">
+          Speichern
+        </button>
+        <p class="adm-hint">Werte werden sofort in config.yaml geschrieben.</p>
+      </div>
+    </section>
+
+    <!-- ── Server-Log ─────────────────────────────────────────── -->
+    <section class="adm-card adm-card--full">
+      <h2 class="adm-card__title">Server-Log</h2>
+      <div class="adm-log-toolbar">
+        <button class="adm-btn adm-btn--xs" onclick="loadLogs()">Aktualisieren</button>
+        <label class="adm-log-auto-label">
+          <input type="checkbox" id="log-auto" checked /> Auto (5s)
+        </label>
+      </div>
+      <div class="adm-log-output" id="log-output">Wird geladen…</div>
+    </section>
+
+    <!-- ── Prompt-Editor ──────────────────────────────────────── -->
+    <section class="adm-card adm-card--full">
+      <h2 class="adm-card__title">KI-Prompt</h2>
+      <textarea id="prompt-text" class="adm-prompt-textarea" rows="10"
+                placeholder="Wird geladen…"></textarea>
+      <div class="adm-actions">
+        <button class="adm-btn" onclick="savePrompt()">Prompt speichern</button>
+        <p class="adm-hint">Wird sofort für neue Generierungen verwendet. Kein Server-Neustart nötig.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="{{ url_for('static', filename='admin.js') }}"></script>
+  <script>loadPool(); loadPrompt(); loadLogs(); loadSpeechConfig();</script>
+</body>
+</html>

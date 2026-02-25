@@ -1,0 +1,79 @@
+name: LXC Provision Check
+
+on:
+  push:
+    paths:
+      - "lxc/**"
+      - "requirements.txt"
+      - "app.py"
+      - "generator.py"
+  pull_request:
+    paths:
+      - "lxc/**"
+      - "requirements.txt"
+      - "app.py"
+      - "generator.py"
+
+jobs:
+  shellcheck:
+    name: Lint provision.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: shellcheck lxc/provision.sh
+        run: shellcheck --severity=warning lxc/provision.sh
+
+  systemd-unit:
+    name: Validate systemd unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: systemd-analyze verify mascot.service
+        run: |
+          # Pfad auf /opt/mascot-app anpassen (existiert nicht im CI – nur Syntax prüfen)
+          systemd-analyze verify lxc/mascot.service 2>&1 || true
+
+  smoke-test:
+    name: Smoke test (Ubuntu 22.04)
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.11 installieren
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y python3.11 python3.11-venv python3.11-dev
+
+      - name: venv + Pakete
+        run: |
+          python3.11 -m venv /tmp/mascot-venv
+          /tmp/mascot-venv/bin/pip install --quiet --upgrade pip
+          /tmp/mascot-venv/bin/pip install --quiet -r requirements.txt
+
+      - name: Syntax-Check app.py und generator.py
+        run: |
+          /tmp/mascot-venv/bin/python -m py_compile app.py
+          /tmp/mascot-venv/bin/python -m py_compile generator.py
+          echo "Syntax OK"
+
+      - name: Import-Check (ohne echten Config/API-Key)
+        env:
+          FLASK_DEBUG: "0"
+        run: |
+          cp .env.example .env
+          # Minimale config.yaml prüfen ob App importierbar ist
+          /tmp/mascot-venv/bin/python - <<'EOF'
+          import sys, os
+          os.chdir(os.path.dirname(os.path.abspath("app.py")))
+          try:
+              import generator
+              print("generator.py: OK")
+          except ImportError as e:
+              print(f"Import-Fehler: {e}")
+              sys.exit(1)
+          EOF

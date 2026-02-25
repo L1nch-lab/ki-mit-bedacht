@@ -1,0 +1,423 @@
+/* ============================================================
+   UKM Design System
+   ============================================================ */
+
+:root {
+  --ukm-primary:      #003866;
+  --ukm-secondary:    #006db0;
+  --ukm-accent:       #00a0d2;
+  --ukm-bg:           #f4f6f8;
+  --ukm-text:         #1a1a1a;
+  --ukm-text-muted:   #9aa5b1;
+  --ukm-shadow-sm:    rgba(0, 56, 102, 0.12);
+  --ukm-shadow-md:    rgba(0, 56, 102, 0.15);
+  --ukm-shadow-lg:    rgba(0, 56, 102, 0.25);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: "Open Sans", Arial, sans-serif;
+  background: var(--ukm-bg);
+  color: var(--ukm-text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Cursor nach 3s Inaktivität ausblenden (Kiosk-Modus) */
+body.cursor-hidden,
+body.cursor-hidden * {
+  cursor: none !important;
+}
+
+/* ── Header ── */
+.ukm-header {
+  background: var(--ukm-primary);
+  color: #ffffff;
+  padding: 0 2rem;
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.ukm-header__banner {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
+}
+
+.ukm-header__inner {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ukm-header__logo-area {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.ukm-header__klinikum {
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.ukm-header__muenster {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.ukm-header__nav {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.9;
+  border-left: 2px solid var(--ukm-secondary);
+  padding-left: 1rem;
+}
+
+/* ── Akzentstreifen unter dem Header ── */
+.ukm-stripe {
+  height: 4px;
+  background: linear-gradient(90deg, var(--ukm-secondary) 0%, var(--ukm-accent) 100%);
+}
+
+/* ── Main / Inhalt ── */
+.ukm-main {
+  flex: 1;
+  min-height: 0; /* verhindert Flex-Overflow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/* ── Stage: Roboter + Labyrinth nebeneinander ── */
+.stage {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10rem;
+  flex-wrap: wrap;
+}
+
+/* ── Szene (Sprechblase + Maskottchen) ── */
+.scene {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── Sprechblase ── */
+.bubble {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid var(--ukm-secondary);
+  border-radius: 20px;
+  padding: 1.4rem 1.8rem 1.4rem 1.4rem;
+  width: 480px;
+  height: 210px;
+  overflow: visible;
+  box-shadow: 0 4px 16px var(--ukm-shadow-sm);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 22px;
+}
+
+/* Zeiger nach unten zur Figur */
+.bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 10px solid transparent;
+  border-top-color: #ffffff;
+  z-index: 2;
+}
+
+.bubble::before {
+  content: "";
+  position: absolute;
+  bottom: -23px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 12px solid transparent;
+  border-top-color: var(--ukm-secondary);
+  z-index: 1;
+}
+
+.bubble-quote {
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--ukm-secondary);
+  font-weight: 700;
+  margin-top: -0.3rem;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.bubble-text {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--ukm-text);
+  transition: opacity 0.4s ease;
+  padding-top: 0.3rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+}
+
+.bubble-text.fade-out {
+  opacity: 0;
+}
+
+/* ── Maskottchen ── */
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.mascot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.mascot img,
+.mascot svg {
+  width: 520px;
+  height: auto;
+  margin-top: 2rem;
+  filter: drop-shadow(0 6px 14px var(--ukm-shadow-sm));
+  animation: float 3s ease-in-out infinite;
+}
+
+.mascot img:hover,
+.mascot svg:hover {
+  filter: drop-shadow(0 8px 18px var(--ukm-shadow-lg));
+}
+
+/* ── Name & Rolle ── */
+.mascot-name {
+  margin-top: 0.75rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ukm-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.mascot-role {
+  font-size: 1rem;
+  color: var(--ukm-secondary);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-top: 0.1rem;
+}
+
+/* ── Pool-Info ── */
+.pool-info {
+  margin-top: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--ukm-text-muted);
+  text-align: center;
+}
+
+/* ── Labyrinth-Panel ── */
+.maze-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding-top: 0.25rem;
+}
+
+.maze-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ukm-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+#maze-canvas {
+  border: 2px solid var(--ukm-secondary);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px var(--ukm-shadow-md);
+  display: block;
+}
+
+.maze-legend {
+  display: flex;
+  gap: 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.legend-astar {
+  color: var(--ukm-secondary);
+}
+
+.legend-bfs {
+  color: #e67e22;
+}
+
+.legend-dfs {
+  color: #27ae60;
+}
+
+.legend-greedy {
+  color: #8e44ad;
+}
+
+/* ── Speed Slider ── */
+.maze-speed-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.maze-speed-label {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.maze-speed-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 140px;
+  height: 5px;
+  border-radius: 3px;
+  background: #c8d6e5;
+  outline: none;
+  cursor: pointer;
+}
+
+.maze-speed-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ukm-secondary);
+  cursor: pointer;
+}
+
+.maze-speed-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--ukm-secondary);
+  cursor: pointer;
+  border: none;
+}
+
+.maze-subtitle {
+  font-size: 0.9rem;
+  color: var(--ukm-text-muted);
+  text-align: center;
+}
+
+/* ── Footer ── */
+.ukm-footer {
+  background: var(--ukm-primary);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0.9rem 2rem;
+  font-size: 0.95rem;
+}
+
+.ukm-footer__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.ukm-footer__sep {
+  opacity: 0.4;
+}
+
+/* ── Vollbild-Button ── */
+.fullscreen-btn {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(0, 56, 102, 0.55);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.25s;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
+.fullscreen-btn:hover {
+  opacity: 1;
+}
+
+/* Im echten Fullscreen-Modus leicht heller (damit man ihn finden kann) */
+:fullscreen .fullscreen-btn,
+:-webkit-full-screen .fullscreen-btn {
+  opacity: 0.25;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .stage {
+    gap: 3rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .stage {
+    gap: 2rem;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bubble {
+    width: min(480px, 90vw);
+  }
+
+  .mascot img,
+  .mascot svg {
+    width: min(520px, 80vw);
+  }
+}
