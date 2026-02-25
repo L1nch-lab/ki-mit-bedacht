@@ -365,7 +365,7 @@ function initSpeedSlider() {
   const slider = document.getElementById("maze-speed");
   if (!slider) return;
   slider.addEventListener("input", () => {
-    // slider value 1 (schnell) … 10 (langsam): 10 → 5ms, 1 → 120ms
+    // slider value 1 (langsam) … 10 (schnell): 1 → 118ms, 10 → 10ms
     STEP_DELAY = Math.round(130 - slider.value * 12);
   });
 }

@@ -46,9 +46,9 @@ python app.py
 | `speech.auto_refresh_seconds` | `25` |
 | `speech.auto_rotate_hours` | `1` |
 | `speech.pool.min_size` / `max_size` | `25` / `100` |
-| `speech.pool.answers_per_request` | `10` |
+| `speech.pool.answers_per_request` | `5` |
 | `ai.provider` | `openrouter` |
-| `ai.fallback_provider` | `claude_haiku` |
+| `ai.fallback_provider` | `gpt_mini` |
 
 Verfügbare Provider: `openrouter`, `claude_haiku`, `gpt_mini`, `mistral`, `deepseek`, `xai`, `gemini`, `ollama`, `lm_studio`
 

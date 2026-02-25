@@ -9,6 +9,31 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Admin Audit-Logging** – alle Admin-Aktionen (Provider-Wechsel, Key-Update, Config-Änderung etc.) werden über `[AUDIT]`-Logeinträge protokolliert
+
+### Changed
+
+- **YAML-Patching**: `_patch_config_yaml()` und `_patch_yaml_value()` nutzen jetzt `ruamel.yaml` statt fragiler Regex-Manipulation – erhält Kommentare und Formatierung zuverlässig
+- **Docker Base Image** gepinnt: `python:3.11-slim` → `python:3.11.12-slim` für reproduzierbare Builds
+- **Rate-Limiter**: Kommentar ergänzt, dass `memory://` nur bei 1 Worker funktioniert
+
+### Fixed
+
+- **`.env`-Writer**: Werte werden jetzt in Anführungszeichen geschrieben und Sonderzeichen (`=`, `"`, Zeilenumbrüche) escaped; `env_var` wird gegen `[A-Z][A-Z_0-9]*` validiert
+- **Path Traversal**: Prompt-Datei-Pfad wird gegen das App-Verzeichnis geprüft – `../` wird abgelehnt
+- **Race Condition** in `_pop_answer()`: `load_answers()` wird jetzt innerhalb des Thread-Locks aufgerufen (TOCTOU-Fix)
+- **Exception-Messages**: Fehler-Responses geben jetzt „Interner Fehler" zurück statt `str(e)` – keine internen Details mehr an den Client
+- **README**: `answers_per_request` von `10` auf `5` korrigiert, `fallback_provider` von `claude_haiku` auf `gpt_mini`
+- **maze.js**: Slider-Kommentar korrigiert (1 = langsam, 10 = schnell)
+
+### Security
+
+- Eingabevalidierung für Umgebungsvariablen-Namen im Admin-API-Key-Endpoint
+- Path-Traversal-Schutz für Prompt-Datei (GET und POST)
+- Keine internen Fehlermeldungen mehr an den Client
+
 ---
 
 ## [1.0.0] – 2026-02-25

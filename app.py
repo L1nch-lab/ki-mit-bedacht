@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import random
+import re
 import threading
 import time
 from collections import deque
@@ -115,6 +116,7 @@ Talisman(
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
+    # memory:// reicht bei 1 Gunicorn-Worker; bei mehreren auf Redis umstellen
     storage_uri="memory://",
     default_limits=[],
 )
@@ -163,6 +165,11 @@ def _require_admin(f):
     return wrapper
 
 
+def _audit(action: str, detail: str = "") -> None:
+    """Loggt Admin-Aktionen für Audit-Zwecke."""
+    logger.info("[AUDIT] {} | {}", action, detail)
+
+
 # ---------------------------------------------------------------------------
 # SSE-Hilfsfunktion
 # ---------------------------------------------------------------------------
@@ -170,11 +177,11 @@ def _require_admin(f):
 def _pop_answer() -> dict:
     """Thread-sicher: nächste Antwort aus der shuffled Queue."""
     global _queue
-    answers = load_answers()
-    if not answers:
-        return {"answer": "Lade Tipp…", "pool_size": 0}
     with _queue_lock:
         if not _queue:
+            answers = load_answers()
+            if not answers:
+                return {"answer": "Lade Tipp…", "pool_size": 0}
             _queue = answers.copy()
             random.shuffle(_queue)
         answer = _queue.pop()
@@ -253,8 +260,9 @@ def api_generate():
 
         save_answers(current)
         return jsonify({"status": "ok", "generated": total_generated, "total": len(current)})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception:
+        logger.exception("Fehler bei /api/generate")
+        return jsonify({"status": "error", "message": "Interner Fehler"}), 500
 
 
 @app.route("/api/rotate", methods=["POST"])
@@ -271,8 +279,9 @@ def api_rotate():
         current = current + new_answers
         save_answers(current)
         return jsonify({"status": "ok", "removed": per_request, "added": len(new_answers), "total": len(current)})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception:
+        logger.exception("Fehler bei /api/rotate")
+        return jsonify({"status": "error", "message": "Interner Fehler"}), 500
 
 
 @app.route("/api/status")
@@ -368,9 +377,11 @@ def admin_api_generate():
         if len(current) > max_size:
             current = current[-max_size:]
         save_answers(current)
+        _audit("manual_generate", f"generated={len(new_answers)} total={len(current)}")
         return jsonify({"status": "ok", "generated": len(new_answers), "total": len(current)})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception:
+        logger.exception("Fehler bei /admin/api/generate")
+        return jsonify({"status": "error", "message": "Interner Fehler"}), 500
 
 
 @app.route("/admin/api/rotate", methods=["POST"])
@@ -385,83 +396,52 @@ def admin_api_rotate():
         new_answers = _deduplicate(raw, current) or raw[:max(1, per_request)]
         current = current + new_answers
         save_answers(current)
+        _audit("manual_rotate", f"removed={per_request} added={len(new_answers)}")
         return jsonify({"status": "ok", "removed": per_request, "added": len(new_answers), "total": len(current)})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    except Exception:
+        logger.exception("Fehler bei /admin/api/rotate")
+        return jsonify({"status": "error", "message": "Interner Fehler"}), 500
 
 
 # ---------------------------------------------------------------------------
 # Admin – Provider & Keys
 # ---------------------------------------------------------------------------
 
+_ruamel = None
+
+
+def _get_ruamel():
+    """Lazy-Init für ruamel.yaml (erhält Kommentare & Formatierung)."""
+    global _ruamel
+    if _ruamel is None:
+        from ruamel.yaml import YAML
+        _ruamel = YAML()
+        _ruamel.preserve_quotes = True
+    return _ruamel
+
+
 def _patch_config_yaml(key: str, value) -> None:
-    """Ersetzt `key: ...` im ai:-Block der config.yaml, ohne Kommentare zu verlieren."""
-    import re
-    text = CONFIG_FILE.read_text(encoding="utf-8")
-    if value is None:
-        replacement = f"  {key}:"
-    else:
-        replacement = f'  {key}: "{value}"'
-    # Nur den ai:-Block isolieren, damit gleichnamige Keys in anderen Sektionen
-    # (z.B. providers) nicht versehentlich überschrieben werden.
-    ai_block_re = re.compile(r'^ai:.*?(?=\n\w|\Z)', re.MULTILINE | re.DOTALL)
-    m = ai_block_re.search(text)
-    if not m:
-        CONFIG_FILE.write_text(text, encoding="utf-8")
-        return
-    block = m.group()
-    key_line_re = re.compile(rf'^  {re.escape(key)}:.*$', re.MULTILINE)
-    if key_line_re.search(block):
-        new_block = key_line_re.sub(replacement, block)
-    else:
-        # Zeile noch nicht vorhanden → direkt nach `ai:` einfügen
-        new_block = block.replace("ai:\n", f"ai:\n{replacement}\n", 1)
-    CONFIG_FILE.write_text(text[:m.start()] + new_block + text[m.end():], encoding="utf-8")
+    """Setzt `key` im ai:-Block der config.yaml (kommentar-erhaltend)."""
+    ry = _get_ruamel()
+    data = ry.load(CONFIG_FILE)
+    data["ai"][key] = str(value) if value is not None else None
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        ry.dump(data, f)
 
 
 def _patch_yaml_value(section_path: str, key: str, value) -> None:
-    """Ersetzt `key: value` in einem hierarchischen YAML-Pfad (erhält Kommentare).
+    """Setzt `key: value` in einem hierarchischen YAML-Pfad (erhält Kommentare).
 
     section_path: z.B. 'speech' oder 'speech.pool'
     """
-    import re
-    text = CONFIG_FILE.read_text(encoding="utf-8")
-    parts = section_path.split(".")
-    indent = "  " * len(parts)
-
-    if isinstance(value, bool):
-        str_value = "true" if value else "false"
-    elif isinstance(value, (int, float)):
-        str_value = str(value)
-    else:
-        str_value = f'"{value}"'
-    replacement = f"{indent}{key}: {str_value}"
-
-    # Hierarchisch den Ziel-Block einschränken
-    block_start, block_end = 0, len(text)
-    for depth, section in enumerate(parts):
-        sec_indent = "  " * depth
-        sec_re = re.compile(
-            rf'^{re.escape(sec_indent)}{re.escape(section)}:', re.MULTILINE
-        )
-        m = sec_re.search(text, block_start, block_end)
-        if not m:
-            return
-        end_re = re.compile(rf'^{re.escape(sec_indent)}\S', re.MULTILINE)
-        end_m = end_re.search(text, m.end(), block_end)
-        block_start = m.start()
-        block_end = end_m.start() if end_m else len(text)
-
-    block = text[block_start:block_end]
-    key_re = re.compile(rf'^{re.escape(indent)}{re.escape(key)}:.*$', re.MULTILINE)
-    if key_re.search(block):
-        new_block = key_re.sub(replacement, block)
-    else:
-        header_end = block.index("\n") + 1
-        new_block = block[:header_end] + replacement + "\n" + block[header_end:]
-    CONFIG_FILE.write_text(
-        text[:block_start] + new_block + text[block_end:], encoding="utf-8"
-    )
+    ry = _get_ruamel()
+    data = ry.load(CONFIG_FILE)
+    node = data
+    for part in section_path.split("."):
+        node = node[part]
+    node[key] = value
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        ry.dump(data, f)
 
 
 @app.route("/admin/api/provider", methods=["POST"])
@@ -474,6 +454,7 @@ def admin_api_provider():
         return jsonify({"status": "error", "message": f"Unbekannter Provider: {name}"}), 400
     config["ai"]["provider"] = name
     _patch_config_yaml("provider", name)
+    _audit("provider_change", name)
     return jsonify({"status": "ok", "provider": name})
 
 
@@ -488,6 +469,7 @@ def admin_api_fallback():
         return jsonify({"status": "error", "message": f"Unbekannter Provider: {name}"}), 400
     config["ai"]["fallback_provider"] = name if name else None
     _patch_config_yaml("fallback_provider", name if name else None)
+    _audit("fallback_change", name or "(deaktiviert)")
     return jsonify({"status": "ok", "fallback_provider": name})
 
 
@@ -499,20 +481,25 @@ def admin_api_keys():
     value = data.get("value", "")
     if not env_var:
         return jsonify({"status": "error", "message": "env_var fehlt"}), 400
+    if not re.fullmatch(r"[A-Z][A-Z_0-9]*", env_var):
+        return jsonify({"status": "error", "message": "Ungültiger Variablenname"}), 400
     # 1. Sofort im laufenden Prozess setzen
     os.environ[env_var] = value
-    # 2. In .env-Datei persistieren
+    # 2. In .env-Datei persistieren (Wert in Anführungszeichen, Sonderzeichen escapen)
+    safe_value = value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "").replace("\r", "")
+    env_line = f'{env_var}="{safe_value}"'
     env_path = Path(__file__).parent / ".env"
     lines = env_path.read_text(encoding="utf-8").splitlines() if env_path.exists() else []
     updated = False
     for i, line in enumerate(lines):
         if line.startswith(f"{env_var}="):
-            lines[i] = f"{env_var}={value}"
+            lines[i] = env_line
             updated = True
             break
     if not updated:
-        lines.append(f"{env_var}={value}")
+        lines.append(env_line)
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    _audit("key_update", env_var)
     return jsonify({"status": "ok"})
 
 
@@ -524,7 +511,10 @@ def admin_api_keys():
 @_require_admin
 def admin_api_prompt_get():
     prompt_file = config["speech"].get("prompt_file", "prompt.txt")
-    p = Path(__file__).parent / prompt_file
+    app_dir = Path(__file__).parent.resolve()
+    p = (app_dir / prompt_file).resolve()
+    if not p.is_relative_to(app_dir):
+        return jsonify({"status": "error", "message": "Ungültiger Dateipfad"}), 400
     text = p.read_text(encoding="utf-8") if p.exists() else config["speech"].get("prompt", "")
     return jsonify({"prompt": text})
 
@@ -536,9 +526,13 @@ def admin_api_prompt_set():
     data = request.get_json() or {}
     text = data.get("prompt", "")
     prompt_file = config["speech"].get("prompt_file", "prompt.txt")
-    p = Path(__file__).parent / prompt_file
+    app_dir = Path(__file__).parent.resolve()
+    p = (app_dir / prompt_file).resolve()
+    if not p.is_relative_to(app_dir):
+        return jsonify({"status": "error", "message": "Ungültiger Dateipfad"}), 400
     p.write_text(text, encoding="utf-8")
     config["speech"]["prompt"] = text
+    _audit("prompt_update")
     return jsonify({"status": "ok"})
 
 
@@ -564,9 +558,11 @@ def admin_api_reload():
                 logger.info("Auto-Rotation neu konfiguriert: alle {}h.", new_hours)
             else:
                 logger.info("Auto-Rotation deaktiviert.")
+        _audit("config_reload", f"provider={config['ai']['provider']}")
         return jsonify({"status": "ok", "provider": config["ai"]["provider"]})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception:
+        logger.exception("Fehler bei /admin/api/reload")
+        return jsonify({"status": "error", "message": "Interner Fehler"}), 400
 
 
 # ---------------------------------------------------------------------------
@@ -651,6 +647,7 @@ def admin_api_config_set():
         else:
             logger.info("Auto-Rotation deaktiviert.")
 
+    _audit("config_update", f"ars={ars} arh={arh} pmin={pmin} pmax={pmax} apr={apr}")
     return jsonify({"status": "ok"})
 
 
