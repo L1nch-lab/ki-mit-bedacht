@@ -305,6 +305,16 @@ body {
   text-overflow: ellipsis;
 }
 
+.adm-key-badge {
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.adm-key-badge--ok      { background: #1a7a3c; color: #d4f7e2; }
+.adm-key-badge--missing { background: #7a1a1a; color: #f7d4d4; }
+
 .adm-key-input {
   flex: 1;
   padding: 0.45rem 0.7rem;

@@ -92,6 +92,11 @@
             {% if env_var %}
             <div class="adm-key-row">
               <span class="adm-key-label" title="{{ env_var }}">{{ name }}</span>
+              {% if key_status.get(env_var) %}
+                <span class="adm-key-badge adm-key-badge--ok">gesetzt</span>
+              {% else %}
+                <span class="adm-key-badge adm-key-badge--missing">fehlt</span>
+              {% endif %}
               <input
                 type="password"
                 class="adm-key-input"

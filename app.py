@@ -317,12 +317,18 @@ def admin_dashboard():
     providers = config.get("providers", {})
     active_provider = config["ai"]["provider"]
     fallback_provider = config["ai"].get("fallback_provider", "")
+    key_status = {
+        cfg["api_key_env"]: len(os.environ.get(cfg["api_key_env"], "")) >= 20
+        for cfg in providers.values()
+        if cfg.get("api_key_env")
+    }
     return render_template(
         "admin.html",
         status=status,
         providers=providers,
         active_provider=active_provider,
         fallback_provider=fallback_provider,
+        key_status=key_status,
     )
 
 

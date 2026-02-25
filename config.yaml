@@ -17,13 +17,13 @@ speech:
     # Nie mehr als diese Anzahl speichern (älteste werden gelöscht)
     max_size: 100
     # Wie viele Antworten pro API-Call generiert werden
-    answers_per_request: 10
+    answers_per_request: 5
 
 ai:
   # Aktiven Provider wählen – einfach den Namen eines Eintrags aus 'providers:' eintragen
   provider: "openrouter"
   # Optional: Fallback-Provider bei API-Fehler (leer lassen zum Deaktivieren)
-  fallback_provider: "claude_haiku"
+  fallback_provider: "gpt_mini"
 
 # ── Provider-Konfiguration ────────────────────────────────────────────────────
 # Jeden Provider einmal konfigurieren. Wechseln: nur ai.provider ändern.
