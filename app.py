@@ -614,10 +614,14 @@ def admin_api_config_set():
     except (TypeError, ValueError) as e:
         return jsonify({"status": "error", "message": f"Ungültiger Wert: {e}"}), 400
 
-    if ars < 5:        errors.append("Refresh muss ≥ 5 s sein.")
-    if arh < 0:        errors.append("Rotation muss ≥ 0 h sein.")
-    if pmin < 1:       errors.append("Pool Min muss ≥ 1 sein.")
-    if pmax <= pmin:   errors.append("Pool Max muss > Min sein.")
+    if ars < 5:
+        errors.append("Refresh muss ≥ 5 s sein.")
+    if arh < 0:
+        errors.append("Rotation muss ≥ 0 h sein.")
+    if pmin < 1:
+        errors.append("Pool Min muss ≥ 1 sein.")
+    if pmax <= pmin:
+        errors.append("Pool Max muss > Min sein.")
     if apr < 1 or apr > pmax:
         errors.append("Pro Request muss ≥ 1 und ≤ Max sein.")
     if errors:
