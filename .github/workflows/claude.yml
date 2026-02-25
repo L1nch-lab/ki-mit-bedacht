@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   claude:
+    if: contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
     steps:
       - uses: anthropics/claude-code-action@v1
