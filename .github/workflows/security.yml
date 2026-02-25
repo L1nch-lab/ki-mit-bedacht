@@ -16,7 +16,7 @@ jobs:
         run: docker build -f docker/Dockerfile -t mascot-app:scan .
 
       - name: Scan with Trivy
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           image-ref: mascot-app:scan
           format: table
