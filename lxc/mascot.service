@@ -1,15 +1,15 @@
 [Unit]
-Description=Klaudius – KI-Maskottchen (Flask/Gunicorn)
+Description=KI mit Bedacht – KI-Maskottchen (Flask/Gunicorn)
 After=network.target
 Wants=network-online.target
 
 [Service]
-User=mascot
-Group=mascot
-WorkingDirectory=/opt/mascot-app
+User=ki-mit-bedacht
+Group=ki-mit-bedacht
+WorkingDirectory=/opt/ki-mit-bedacht
 
 # .env wird automatisch von python-dotenv geladen (WorkingDirectory)
-ExecStart=/opt/mascot-app/venv/bin/gunicorn \
+ExecStart=/opt/ki-mit-bedacht/venv/bin/gunicorn \
     --worker-class=gthread \
     --workers=1 \
     --threads=4 \
@@ -22,16 +22,16 @@ ExecStart=/opt/mascot-app/venv/bin/gunicorn \
 Restart=always
 RestartSec=5
 
-# Logs → journald (abrufbar mit: journalctl -u mascot -f)
+# Logs → journald (abrufbar mit: journalctl -u ki-mit-bedacht -f)
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=mascot
+SyslogIdentifier=ki-mit-bedacht
 
 # Hardening
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
-ReadWritePaths=/opt/mascot-app
+ReadWritePaths=/opt/ki-mit-bedacht
 
 [Install]
 WantedBy=multi-user.target

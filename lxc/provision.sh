@@ -4,25 +4,25 @@
 # Verwendung (als root im Container):
 #
 #   Option A -- Dateien schon vorhanden (z.B. via rsync/scp vom Host):
-#     rsync -av mascot-app/ root@<CT-IP>:/tmp/mascot-src/
-#     bash /tmp/mascot-src/lxc/provision.sh
+#     rsync -av "KI mit Bedacht/" root@<CT-IP>:/tmp/ki-mit-bedacht-src/
+#     bash /tmp/ki-mit-bedacht-src/lxc/provision.sh
 #
 #   Option B -- Git-Clone (Container braucht Internet):
 #     export REPO_URL="https://github.com/OWNER/ki-mit-bedacht.git"
-#     bash /tmp/mascot-src/lxc/provision.sh
+#     bash /tmp/ki-mit-bedacht-src/lxc/provision.sh
 #
 # Nach der Installation:
-#   nano /opt/mascot-app/.env   <- API-Keys eintragen
-#   systemctl restart mascot
+#   nano /opt/ki-mit-bedacht/.env   <- API-Keys eintragen
+#   systemctl restart ki-mit-bedacht
 
 set -euo pipefail
 
 # Konfiguration
-APP_USER="mascot"
-APP_DIR="/opt/mascot-app"
-SERVICE_NAME="mascot"
+APP_USER="ki-mit-bedacht"
+APP_DIR="/opt/ki-mit-bedacht"
+SERVICE_NAME="ki-mit-bedacht"
 PYTHON="python3.11"
-SRC_DIR="${SRC_DIR:-/tmp/mascot-src}"
+SRC_DIR="${SRC_DIR:-/tmp/ki-mit-bedacht-src}"
 REPO_URL="${REPO_URL:-}"
 
 log() { echo "[provision] $*"; }

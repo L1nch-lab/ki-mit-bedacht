@@ -35,7 +35,7 @@ jobs:
 
       - name: systemd-analyze verify mascot.service
         run: |
-          # Pfad auf /opt/mascot-app anpassen (existiert nicht im CI – nur Syntax prüfen)
+          # Pfad auf /opt/ki-mit-bedacht anpassen (existiert nicht im CI – nur Syntax prüfen)
           systemd-analyze verify lxc/mascot.service 2>&1 || true
 
   smoke-test:

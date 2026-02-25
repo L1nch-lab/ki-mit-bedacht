@@ -22,9 +22,9 @@ Browser: [http://localhost:5000](http://localhost:5000) · Admin: [http://localh
 ## Quickstart (LXC / Proxmox)
 
 ```bash
-rsync -av "KI mit Bedacht/" root@<CT-IP>:/tmp/mascot-src/
-bash /tmp/mascot-src/lxc/provision.sh   # im Container als root
-nano /opt/mascot-app/.env && systemctl restart mascot
+rsync -av "KI mit Bedacht/" root@<CT-IP>:/tmp/ki-mit-bedacht-src/
+bash /tmp/ki-mit-bedacht-src/lxc/provision.sh   # im Container als root
+nano /opt/ki-mit-bedacht/.env && systemctl restart ki-mit-bedacht
 ```
 
 > Das Skript ist idempotent – `.env` und `answers.json` bleiben erhalten.
