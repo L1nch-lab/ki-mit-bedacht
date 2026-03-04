@@ -9,6 +9,6 @@ python-dotenv~=1.2
 apscheduler~=3.11
 flask-limiter~=4.1
 loguru~=0.7
-pydantic~=2.11
+pydantic~=2.12
 flask-talisman~=1.1
 flask-compress~=1.23
